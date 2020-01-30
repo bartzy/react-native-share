@@ -1,4 +1,5 @@
 #import <MessageUI/MessageUI.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 #import "RNShare.h"
 // import RCTConvert
 #if __has_include(<React/RCTConvert.h>)
@@ -58,6 +59,23 @@
     return YES;
 }
 
++ (NSString *)mimeTypeForFileAtPath: (NSString *) path {
+  if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+    return nil;
+  }
+
+  // Borrowed from https://stackoverflow.com/questions/5996797/determine-mime-type-of-nsdata-loaded-from-a-file
+  // itself, derived from  https://stackoverflow.com/questions/2439020/wheres-the-iphone-mime-type-database
+  CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[path pathExtension], NULL);
+  CFStringRef mimeType = UTTypeCopyPreferredTagWithClass (UTI, kUTTagClassMIMEType);
+  CFRelease(UTI);
+  if (!mimeType) {
+    return @"application/octet-stream";
+  }
+
+  return (__bridge NSString *)mimeType;
+}
+
 - (CGRect)sourceRectInView:(UIView *)sourceView
              anchorViewTag:(NSNumber *)anchorViewTag
 {
@@ -69,8 +87,13 @@
     }
 }
 
-- (BOOL)isImageMimeType:(NSString *)data {
-    NSRange range = [data rangeOfString:@"data:image" options:NSCaseInsensitiveSearch];
+- (BOOL)isImageMimeType:(NSString *)url {
+    NSString *mimeType = [RNShare mimeTypeForFileAtPath:url];
+    if ([mimeType isEqualToString:@"image/jpeg"]) {
+        return true;
+    }
+
+    NSRange range = [url rangeOfString:@"data:image" options:NSCaseInsensitiveSearch];
     if (range.location != NSNotFound) {
         return true;
     } else {
