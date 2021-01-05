@@ -88,8 +88,9 @@
 }
 
 - (BOOL)isImageMimeType:(NSString *)url {
+    NSArray<NSString *> *imageMimeTypes = @[ @"image/jpeg", @"image/png" ];
     NSString *mimeType = [RNShare mimeTypeForFileAtPath:url];
-    if ([mimeType isEqualToString:@"image/jpeg"]) {
+    if ([imageMimeTypes containsObject:mimeType]) {
         return true;
     }
 
